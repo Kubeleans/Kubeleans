@@ -2,3 +2,6 @@ apiVersion: "kubeleans.io/v1"
 kind: GrainFunctionApplication
 metadata:
   name: "test-app"
+runtime: go
+applicationName: test-app
+activationMode: alwaysOn
