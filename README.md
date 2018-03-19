@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Kubeleans/Kubeleans-Documents/blob/master/docs/images/kubeleans-512.png" alt="Kubeleans" width="300px"> 
+  <img src="https://github.com/Kubeleans/Kubeleans-Documents/blob/master/images/kubeleans-512.png" alt="Kubeleans" width="300px"> 
   <h1>Kubeleans</h1>
 </p>
 
