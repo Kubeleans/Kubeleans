@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.1" />
+    <PackageReference Include="Microsoft.Orleans.Server" Version="2.0.0-rc2" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kubeleans.KubernetesAPI\Kubeleans.KubernetesAPI.csproj" />
+    <ProjectReference Include="..\..\src\Kubeleans.Master\Kubeleans.Master.csproj" />
+    <ProjectReference Include="..\..\src\Kubeleans.Model\Kubeleans.Model.csproj" />
+    <ProjectReference Include="..\..\src\Kubeleans.Worker\Kubeleans.Worker.csproj" />
+  </ItemGroup>
+
+</Project>
