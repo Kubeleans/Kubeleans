@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Kubeleans.KubernetesAPI\Kubeleans.KubernetesAPI.csproj" />
+    <ProjectReference Include="..\Kubeleans.Kubernetes\Kubeleans.Kubernetes.csproj" />
   </ItemGroup>
 
 </Project>

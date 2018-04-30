@@ -20,6 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleToTest Include="Kubeleans.Kubernetes.Tests" />
     <InternalsVisibleToTest Include="Kubeleans.Tests" />
   </ItemGroup>
 

@@ -1,14 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Orleans.Server" Version="2.0.0-rc2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Kubeleans.KubernetesAPI\Kubeleans.KubernetesAPI.csproj" />
     <ProjectReference Include="..\..\src\Kubeleans.Master\Kubeleans.Master.csproj" />
     <ProjectReference Include="..\..\src\Kubeleans.Model\Kubeleans.Model.csproj" />
     <ProjectReference Include="..\..\src\Kubeleans.Worker\Kubeleans.Worker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Orleans.Server" Version="2.0.0" />
   </ItemGroup>
 
 </Project>
