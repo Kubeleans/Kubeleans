@@ -1,0 +1,21 @@
+﻿using System;
+using System.Threading.Tasks;
+
+namespace Kubeleans.Kubernetes
+{
+    public class KubernetesWatcher<T> : IKubernetesWatcher<T> where T : new()
+    {
+        private readonly Func<Watch<T>, Task> changeHandler;
+        private readonly Func<Exception, Task> errorHandler;
+
+        public KubernetesWatcher(Func<Watch<T>, Task> changeHandler, Func<Exception, Task> errorHandler = default)
+        {
+            this.changeHandler = changeHandler ?? throw new ArgumentNullException(nameof(changeHandler));
+            this.errorHandler = errorHandler;
+        }
+
+        public Task Change(Watch<T> value) => changeHandler(value);
+
+        public Task Error(Exception exception) => errorHandler==null ? Task.CompletedTask : errorHandler(exception);
+    }
+}

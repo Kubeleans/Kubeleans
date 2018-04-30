@@ -1,4 +1,4 @@
-using Kubeleans.KubernetesAPI.Model;
+using Kubeleans.Kubernetes.Models;
 using Newtonsoft.Json;
 
 namespace Kubeleans.Model

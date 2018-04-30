@@ -1,4 +1,4 @@
-using Kubeleans.KubernetesAPI.Model;
+using Kubeleans.Kubernetes.Models;
 using Newtonsoft.Json;
 using System;
 
@@ -39,9 +39,9 @@ namespace Kubeleans.Model
             this.Kind = KIND;
         }
 
-        protected override void Validate()
-        {
-            if (string.IsNullOrWhiteSpace(this.ApplicationName)) throw new ArgumentNullException(nameof(this.ApplicationName));
-        }
+        //protected override void Validate()
+        //{
+        //    if (string.IsNullOrWhiteSpace(this.ApplicationName)) throw new ArgumentNullException(nameof(this.ApplicationName));
+        //}
     }
 }
