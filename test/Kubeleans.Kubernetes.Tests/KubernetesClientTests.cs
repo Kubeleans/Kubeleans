@@ -10,7 +10,8 @@ namespace Kubeleans.Kubernetes.Tests
 {
     public class KubernetesClientTests : IClassFixture<KubernetesClientFixture>
     {
-        private const int ApiDelayMilliseconds = 500;
+        private const int ApiRetryDelayMilliseconds = 500;
+        private const int ApiDeleteDelayMilliseconds = 1000;
 #if !DEBUG
         private const int ApiWatcherTimeoutMilliseconds = 10000;
 #else
@@ -28,7 +29,7 @@ namespace Kubeleans.Kubernetes.Tests
         [Fact]
         public async Task NamespaceApiTests()
         {
-            var namespaceName = fixture.GetTemporaryObjectName("ns");
+            var namespaceName = this.fixture.GetTemporaryObjectName("ns");
 
             var @namespace = new Namespace
             {
@@ -44,7 +45,7 @@ namespace Kubeleans.Kubernetes.Tests
             // Create namespace
             //
 
-            var createdNamespace = await fixture.ApiClient.CreateNamespace(@namespace);
+            var createdNamespace = await this.fixture.ApiClient.CreateNamespace(@namespace).ConfigureAwait(false);
 
             Assert.NotNull(createdNamespace);
 
@@ -55,10 +56,10 @@ namespace Kubeleans.Kubernetes.Tests
             var isCreated = await PollWithPredicate(
                 async () =>
                 {
-                    var polledNamespace = await fixture.ApiClient.GetNamespace(namespaceName);
+                    var polledNamespace = await this.fixture.ApiClient.GetNamespace(namespaceName).ConfigureAwait(false);
 
                     return polledNamespace.Status.Phase == ObjectStatus.Active;
-                });
+                }).ConfigureAwait(false);
 
             Assert.True(isCreated);
 
@@ -66,7 +67,7 @@ namespace Kubeleans.Kubernetes.Tests
             // List namespaces
             //
 
-            var namespaces = await fixture.ApiClient.ListNamespaces();
+            var namespaces = await this.fixture.ApiClient.ListNamespaces().ConfigureAwait(false);
 
             Assert.NotNull(namespaces);
             Assert.NotNull(namespaces.Items.FirstOrDefault(n => n.Metadata.Name == namespaceName));
@@ -75,14 +76,14 @@ namespace Kubeleans.Kubernetes.Tests
             // Replace namespace with an updated definition
             //
 
-            @namespace = await fixture.ApiClient.GetNamespace(namespaceName);
+            @namespace = await this.fixture.ApiClient.GetNamespace(namespaceName).ConfigureAwait(false);
 
             @namespace.Metadata.Labels = new Dictionary<string, string>
             {
                 ["L1"] = "Test"
             };
 
-            var replacedNamespace = await fixture.ApiClient.ReplaceNamespace(namespaceName, @namespace);
+            var replacedNamespace = await this.fixture.ApiClient.ReplaceNamespace(@namespace).ConfigureAwait(false);
 
             Assert.NotNull(replacedNamespace);
 
@@ -116,13 +117,16 @@ namespace Kubeleans.Kubernetes.Tests
                 return Task.CompletedTask;
             });
 
-            var task = Task.Run(() => fixture.ApiClient.WatchNamespaceChanges(watcher, cts.Token));
+            var task = Task.Run(async () => await this.fixture.ApiClient.WatchNamespaceChanges(watcher, cts.Token).ConfigureAwait(false));
 
             //
             // Delete namespace
             //
 
-            var deletedNamespace = await fixture.ApiClient.DeleteNamespace(namespaceName);
+            // Need to wait with the delete operation to make sure watcher catches up and gets the changes
+            await Task.Delay(ApiDeleteDelayMilliseconds).ConfigureAwait(false);
+
+            var deletedNamespace = await this.fixture.ApiClient.DeleteNamespace(namespaceName).ConfigureAwait(false);
 
             Assert.NotNull(deletedNamespace);
 
@@ -131,7 +135,7 @@ namespace Kubeleans.Kubernetes.Tests
 
             cts.Cancel();
 
-            await task;
+            await task.ConfigureAwait(false);
 
             // Verify that we had no exception during watch
             Assert.Null(watchException);
@@ -140,7 +144,7 @@ namespace Kubeleans.Kubernetes.Tests
         [Fact]
         public async Task CustomResourceDefinitionApiTests()
         {
-            var baseName = fixture.GetTemporaryObjectName("crd");
+            var baseName = this.fixture.GetTemporaryObjectName("crd");
             var customResourceDefinitionName = $"{baseName}s.kubeleans.io";
 
             var customResourceDefinition = new CustomResourceDefinition
@@ -163,8 +167,8 @@ namespace Kubeleans.Kubernetes.Tests
                     {
                         Plural = baseName + "s",
                         Singular = baseName,
-                        Kind = fixture.GetKind(baseName),
-                        ShortNames = new List<string> { fixture.GetShortName(baseName) }
+                        Kind = this.fixture.GetKind(baseName),
+                        ShortNames = new List<string> { this.fixture.GetShortName(baseName) }
                     }
                 }
             };
@@ -173,7 +177,7 @@ namespace Kubeleans.Kubernetes.Tests
             // Create customResourceDefinition
             //
 
-            var createdCustomResourceDefinition = await fixture.ApiClient.CreateCustomResourceDefinition(customResourceDefinition);
+            var createdCustomResourceDefinition = await this.fixture.ApiClient.CreateCustomResourceDefinition(customResourceDefinition).ConfigureAwait(false);
 
             Assert.NotNull(createdCustomResourceDefinition);
 
@@ -184,10 +188,10 @@ namespace Kubeleans.Kubernetes.Tests
             var isCreated = await PollWithPredicate(
                 async () =>
                 {
-                    var polledCustomResourceDefinition = await fixture.ApiClient.GetCustomResourceDefinition(customResourceDefinitionName);
+                    var polledCustomResourceDefinition = await this.fixture.ApiClient.GetCustomResourceDefinition(customResourceDefinitionName).ConfigureAwait(false);
 
-                    return polledCustomResourceDefinition.Status.Conditions.FirstOrDefault(c => String.Compare(c.Status, "true", StringComparison.InvariantCultureIgnoreCase) == 0) != null;
-                });
+                    return polledCustomResourceDefinition.Status.Conditions.FirstOrDefault(c => string.Compare(c.Status, "true", StringComparison.InvariantCultureIgnoreCase) == 0) != null;
+                }).ConfigureAwait(false);
 
             Assert.True(isCreated);
 
@@ -195,7 +199,7 @@ namespace Kubeleans.Kubernetes.Tests
             // List CustomResourceDefinitions
             //
 
-            var customResourceDefinitions = await fixture.ApiClient.ListCustomResourceDefinitions();
+            var customResourceDefinitions = await this.fixture.ApiClient.ListCustomResourceDefinitions().ConfigureAwait(false);
 
             Assert.NotNull(customResourceDefinitions);
             Assert.NotNull(customResourceDefinitions.Items.FirstOrDefault(n => n.Metadata.Name == customResourceDefinitionName));
@@ -204,14 +208,14 @@ namespace Kubeleans.Kubernetes.Tests
             // Replace customResourceDefinition with an updated definition
             //
 
-            customResourceDefinition = await fixture.ApiClient.GetCustomResourceDefinition(customResourceDefinitionName);
+            customResourceDefinition = await this.fixture.ApiClient.GetCustomResourceDefinition(customResourceDefinitionName).ConfigureAwait(false);
 
             customResourceDefinition.Metadata.Labels = new Dictionary<string, string>
             {
                 ["L1"] = "Test"
             };
 
-            var replacedCustomResourceDefinition = await fixture.ApiClient.ReplaceCustomResourceDefinition(customResourceDefinitionName, customResourceDefinition);
+            var replacedCustomResourceDefinition = await this.fixture.ApiClient.ReplaceCustomResourceDefinition(customResourceDefinition).ConfigureAwait(false);
 
             Assert.NotNull(replacedCustomResourceDefinition);
 
@@ -245,13 +249,16 @@ namespace Kubeleans.Kubernetes.Tests
                 return Task.CompletedTask;
             });
 
-            var task = Task.Run(() => fixture.ApiClient.WatchCustomResourceDefinitionChanges(watcher, cts.Token));
+            var task = Task.Run(async () => await this.fixture.ApiClient.WatchCustomResourceDefinitionChanges(watcher, cts.Token).ConfigureAwait(false));
 
             //
             // Delete customResourceDefinition
             //
 
-            var deletedCustomResourceDefinition = await fixture.ApiClient.DeleteCustomResourceDefinition(customResourceDefinitionName);
+            // Need to wait with the delete operation to make sure watcher catches up and gets the changes
+            await Task.Delay(ApiDeleteDelayMilliseconds).ConfigureAwait(false);
+
+            var deletedCustomResourceDefinition = await this.fixture.ApiClient.DeleteCustomResourceDefinition(customResourceDefinitionName).ConfigureAwait(false);
 
             Assert.NotNull(deletedCustomResourceDefinition);
 
@@ -260,7 +267,7 @@ namespace Kubeleans.Kubernetes.Tests
 
             cts.Cancel();
 
-            await task;
+            await task.ConfigureAwait(false);
 
             // Verify that we had no exception during watch
             Assert.Null(watchException);
@@ -269,7 +276,7 @@ namespace Kubeleans.Kubernetes.Tests
         [Fact]
         public async Task CustomObjectApiTests()
         {
-            var namespaceName = fixture.Namespace;
+            var namespaceName = this.fixture.Namespace;
 
             //
             // Create the namespace specified in ApiClient options.
@@ -285,7 +292,7 @@ namespace Kubeleans.Kubernetes.Tests
                 }
             };
 
-            var createdNamespace = await fixture.ApiClient.CreateNamespace(@namespace);
+            var createdNamespace = await this.fixture.ApiClient.CreateNamespace(@namespace).ConfigureAwait(false);
 
             Assert.NotNull(createdNamespace);
 
@@ -293,7 +300,7 @@ namespace Kubeleans.Kubernetes.Tests
             // Create a CRD for our GrainFunction
             //
 
-            var baseName = fixture.GetTemporaryObjectName("crd");
+            var baseName = this.fixture.GetTemporaryObjectName("crd");
             var group = "kubeleans.io";
             var customResourceDefinitionName = $"{baseName}s.{group}";
 
@@ -317,23 +324,23 @@ namespace Kubeleans.Kubernetes.Tests
                     {
                         Plural = baseName + "s",
                         Singular = baseName,
-                        Kind = fixture.GetKind(baseName),
-                        ShortNames = new List<string> { fixture.GetShortName(baseName) }
+                        Kind = this.fixture.GetKind(baseName),
+                        ShortNames = new List<string> { this.fixture.GetShortName(baseName) }
                     }
                 }
             };
 
-            var createdCustomResourceDefinition = await fixture.ApiClient.CreateCustomResourceDefinition(customResourceDefinition);
+            var createdCustomResourceDefinition = await this.fixture.ApiClient.CreateCustomResourceDefinition(customResourceDefinition).ConfigureAwait(false);
 
             Assert.NotNull(createdCustomResourceDefinition);
 
             var isCreated = await PollWithPredicate(
                 async () =>
                 {
-                    var polledCustomResourceDefinition = await fixture.ApiClient.GetCustomResourceDefinition(customResourceDefinitionName);
+                    var polledCustomResourceDefinition = await this.fixture.ApiClient.GetCustomResourceDefinition(customResourceDefinitionName).ConfigureAwait(false);
 
-                    return polledCustomResourceDefinition.Status.Conditions.FirstOrDefault(c => String.Compare(c.Status, "true", StringComparison.InvariantCultureIgnoreCase) == 0) != null;
-                });
+                    return polledCustomResourceDefinition.Status.Conditions.FirstOrDefault(c => string.Compare(c.Status, "true", StringComparison.InvariantCultureIgnoreCase) == 0) != null;
+                }).ConfigureAwait(false);
 
             Assert.True(isCreated);
 
@@ -341,7 +348,7 @@ namespace Kubeleans.Kubernetes.Tests
             // Create a GrainFunction Custom Object
             //
 
-            var grainFunctionName = fixture.GetTemporaryObjectName("gf");
+            var grainFunctionName = this.fixture.GetTemporaryObjectName("gf");
 
             var grainFunction = new GrainFunction
             {
@@ -359,13 +366,13 @@ namespace Kubeleans.Kubernetes.Tests
                 }
             };
 
-            var createdCustomObject = await fixture.ApiClient.CreateCustomObject(customResourceDefinition.Spec.Names.Plural, grainFunction);
+            var createdCustomObject = await this.fixture.ApiClient.CreateCustomObject(customResourceDefinition.Spec.Names.Plural, grainFunction).ConfigureAwait(false);
 
             //
             // List CustomObjects
             //
 
-            var customObjects = await fixture.ApiClient.ListCustomObjects<GrainFunctionList>(customResourceDefinition.Spec.Names.Plural);
+            var customObjects = await this.fixture.ApiClient.ListCustomObjects<GrainFunctionList>(customResourceDefinition.Spec.Names.Plural).ConfigureAwait(false);
 
             Assert.NotNull(customObjects);
             Assert.NotNull(customObjects.Items.FirstOrDefault(n => n.Metadata.Name == grainFunctionName));
@@ -374,14 +381,14 @@ namespace Kubeleans.Kubernetes.Tests
             // Replace GrainFunction with an updated definition
             //
 
-            grainFunction = await fixture.ApiClient.GetCustomObject<GrainFunction>(customResourceDefinition.Spec.Names.Plural, grainFunctionName);
+            grainFunction = await this.fixture.ApiClient.GetCustomObject<GrainFunction>(customResourceDefinition.Spec.Names.Plural, grainFunctionName).ConfigureAwait(false);
 
             grainFunction.Metadata.Labels = new Dictionary<string, string>
             {
                 ["L1"] = "Test"
             };
 
-            var replacedGrainFunction = await fixture.ApiClient.ReplaceCustomObject(customResourceDefinition.Spec.Names.Plural, grainFunction);
+            var replacedGrainFunction = await this.fixture.ApiClient.ReplaceCustomObject(customResourceDefinition.Spec.Names.Plural, grainFunction).ConfigureAwait(false);
 
             //
             // Watch GrainFunction changes
@@ -393,11 +400,11 @@ namespace Kubeleans.Kubernetes.Tests
 
             var watcher = new KubernetesWatcher<GrainFunction>((value) =>
             {
-                    //
-                    // Look for the deleted customResourceDefinition in the list of changes
-                    //
+                //
+                // Look for the deleted customResourceDefinition in the list of changes
+                //
 
-                    if (value.Type == WatchTypes.Deleted && value.Object.Metadata.Name == grainFunctionName)
+                if (value.Type == WatchTypes.Deleted && value.Object.Metadata.Name == grainFunctionName)
                 {
                     reset.Set();
                 }
@@ -413,13 +420,16 @@ namespace Kubeleans.Kubernetes.Tests
                 return Task.CompletedTask;
             });
 
-            var task = Task.Run(() => fixture.ApiClient.WatchCustomObjectChanges(customResourceDefinition.Spec.Names.Plural, watcher, cancellationToken: cts.Token));
+            var task = Task.Run(async () => await this.fixture.ApiClient.WatchCustomObjectChanges(customResourceDefinition.Spec.Names.Plural, watcher, cancellationToken: cts.Token).ConfigureAwait(false));
 
             //
             // Delete GrainFunction
             //
 
-            var deletedGrainFunction = await fixture.ApiClient.DeleteCustomObject<GrainFunction>(customResourceDefinition.Spec.Names.Plural, grainFunctionName);
+            // Need to wait with the delete operation to make sure watcher catches up and gets the changes
+            await Task.Delay(ApiDeleteDelayMilliseconds).ConfigureAwait(false);
+
+            var deletedGrainFunction = await this.fixture.ApiClient.DeleteCustomObject<GrainFunction>(customResourceDefinition.Spec.Names.Plural, grainFunctionName).ConfigureAwait(false);
 
             Assert.NotNull(deletedGrainFunction);
 
@@ -428,7 +438,7 @@ namespace Kubeleans.Kubernetes.Tests
 
             cts.Cancel();
 
-            await task;
+            await task.ConfigureAwait(false);
 
             // Verify that we had no exception during watch
             Assert.Null(watchException);
@@ -437,11 +447,11 @@ namespace Kubeleans.Kubernetes.Tests
             // Tead down created base objects
             //
 
-            var deletedCustomResourceDefinition = await fixture.ApiClient.DeleteCustomResourceDefinition(customResourceDefinitionName);
+            var deletedCustomResourceDefinition = await this.fixture.ApiClient.DeleteCustomResourceDefinition(customResourceDefinitionName).ConfigureAwait(false);
 
             Assert.NotNull(deletedCustomResourceDefinition);
 
-            var deletedNamespace = await fixture.ApiClient.DeleteNamespace(namespaceName);
+            var deletedNamespace = await this.fixture.ApiClient.DeleteNamespace(namespaceName).ConfigureAwait(false);
 
             Assert.NotNull(deletedNamespace);
         }
@@ -455,7 +465,7 @@ namespace Kubeleans.Kubernetes.Tests
             {
                 try
                 {
-                    if (await predicate())
+                    if (await predicate().ConfigureAwait(false))
                     {
                         result = true;
 
@@ -464,7 +474,7 @@ namespace Kubeleans.Kubernetes.Tests
                 }
                 catch (KubernetesApiException ex)
                 {
-                    if (exceptionPredicate == null || (exceptionPredicate != null && await exceptionPredicate(ex)))
+                    if (exceptionPredicate == null || (exceptionPredicate != null && await exceptionPredicate(ex).ConfigureAwait(false)))
                     {
                         result = true;
 
@@ -472,7 +482,7 @@ namespace Kubeleans.Kubernetes.Tests
                     }
                 }
 
-                await Task.Delay(ApiDelayMilliseconds);
+                await Task.Delay(ApiRetryDelayMilliseconds).ConfigureAwait(false);
 
                 retries++;
             }

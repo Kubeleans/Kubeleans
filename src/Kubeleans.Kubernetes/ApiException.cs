@@ -15,21 +15,21 @@ namespace Kubeleans.Kubernetes
         public ApiException(HttpRequestMessage request, HttpMethod httpMethod, HttpStatusCode statusCode, string reasonPhrase, HttpResponseHeaders headers, JsonSerializerSettings jsonSerializerSettings)
             : base(CreateMessage(statusCode, reasonPhrase))
         {
-            Request = request;
-            Method = httpMethod;
-            StatusCode = statusCode;
-            ReasonPhrase = reasonPhrase;
-            Headers = headers;
+            this.Request = request;
+            this.Method = httpMethod;
+            this.StatusCode = statusCode;
+            this.ReasonPhrase = reasonPhrase;
+            this.Headers = headers;
 
             this.jsonSerializerSettings = jsonSerializerSettings;
         }
-        public T GetContentAs<T>() => HasContent ? JsonConvert.DeserializeObject<T>(Content, jsonSerializerSettings) : default;
+        public T GetContentAs<T>() => this.HasContent ? JsonConvert.DeserializeObject<T>(this.Content, this.jsonSerializerSettings) : default;
 
         public HttpContentHeaders ContentHeaders { get; private set; }
 
         public string Content { get; private set; }
 
-        public bool HasContent => !string.IsNullOrWhiteSpace(Content);
+        public bool HasContent => !string.IsNullOrWhiteSpace(this.Content);
 
         public HttpResponseHeaders Headers { get; }
 
@@ -41,7 +41,7 @@ namespace Kubeleans.Kubernetes
 
         public HttpStatusCode StatusCode { get; }
 
-        public Uri Uri => Request.RequestUri;
+        public Uri Uri => this.Request.RequestUri;
 
         internal static async Task<KubernetesApiException> Create(HttpRequestMessage request, HttpMethod httpMethod, HttpResponseMessage response, JsonSerializerSettings jsonSerializerSettings)
         {

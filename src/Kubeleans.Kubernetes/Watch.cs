@@ -6,8 +6,8 @@ namespace Kubeleans.Kubernetes
     {
         public Watch(string type, T @object)
         {
-            Type = (WatchTypes)Enum.Parse(typeof(WatchTypes), type, true);
-            Object = @object;
+            this.Type = (WatchTypes)Enum.Parse(typeof(WatchTypes), type, true);
+            this.Object = @object;
         }
 
         public WatchTypes Type { get; }

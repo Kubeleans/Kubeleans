@@ -14,8 +14,8 @@ namespace Kubeleans.Kubernetes
             this.errorHandler = errorHandler;
         }
 
-        public Task Change(Watch<T> value) => changeHandler(value);
+        public Task Change(Watch<T> value) => this.changeHandler(value);
 
-        public Task Error(Exception exception) => errorHandler==null ? Task.CompletedTask : errorHandler(exception);
+        public Task Error(Exception exception) => this.errorHandler ==null ? Task.CompletedTask : this.errorHandler(exception);
     }
 }

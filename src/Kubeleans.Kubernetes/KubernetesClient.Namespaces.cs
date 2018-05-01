@@ -1,4 +1,4 @@
-﻿using Kubeleans.Kubernetes.Models;
+using Kubeleans.Kubernetes.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,40 +7,37 @@ namespace Kubeleans.Kubernetes
 {
     public partial class KubernetesClient
     {
-        public Task<NamespaceList> ListNamespaces(CancellationToken cancellationToken = default)
+        private static class NamespaceUrls
         {
-            var url = $"{options.BaseUrl}/api/v1/namespaces";
-
-            return this.GetAsync<NamespaceList>(url, cancellationToken: cancellationToken);
+            internal static string BaseUrl => "api/v1/namespaces";
+            internal static string ObjectUrl(string namespaceName) => $"api/v1/namespaces/{namespaceName}";
         }
+
+        public Task<NamespaceList> ListNamespaces(CancellationToken cancellationToken = default) => this.GetAsync<NamespaceList>(NamespaceUrls.BaseUrl, cancellationToken: cancellationToken);
 
         public Task<Namespace> CreateNamespace(Namespace @namespace, CancellationToken cancellationToken = default)
         {
-            if (@namespace==null)
-            {
-                throw new ArgumentNullException(nameof(@namespace));
-            }
-
-            var url = $"{options.BaseUrl}/api/v1/namespaces";
-
-            return this.PostAsync<Namespace, Namespace>(url, payload: @namespace, cancellationToken: cancellationToken);
-        }
-
-        public Task<Namespace> ReplaceNamespace(string namespaceName, Namespace @namespace, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(namespaceName))
-            {
-                throw new ArgumentNullException(nameof(namespaceName));
-            }
-
             if (@namespace == null)
             {
                 throw new ArgumentNullException(nameof(@namespace));
             }
 
-            var url = $"{options.BaseUrl}/api/v1/namespaces/{namespaceName}";
+            return this.PostAsync<Namespace, Namespace>(NamespaceUrls.BaseUrl, payload: @namespace, cancellationToken: cancellationToken);
+        }
 
-            return this.PutAsync<Namespace, Namespace>(url, payload: @namespace, cancellationToken: cancellationToken);
+        public Task<Namespace> ReplaceNamespace(Namespace @namespace, CancellationToken cancellationToken = default)
+        {
+            if (@namespace == null)
+            {
+                throw new ArgumentNullException(nameof(@namespace));
+            }
+
+            if (@namespace.Metadata == null || string.IsNullOrWhiteSpace(@namespace.Metadata.Name))
+            {
+                throw new ArgumentNullException(nameof(@namespace.Metadata.Name), "Metadata.Name is required.");
+            }
+
+            return this.PutAsync<Namespace, Namespace>(NamespaceUrls.ObjectUrl(@namespace.Metadata.Name), payload: @namespace, cancellationToken: cancellationToken);
         }
 
         public Task<Namespace> GetNamespace(string namespaceName, CancellationToken cancellationToken = default)
@@ -50,23 +47,27 @@ namespace Kubeleans.Kubernetes
                 throw new ArgumentNullException(nameof(namespaceName));
             }
 
-            var url = $"{options.BaseUrl}/api/v1/namespaces/{namespaceName}";
-
-            return this.GetAsync<Namespace>(url, cancellationToken: cancellationToken);
+            return this.GetAsync<Namespace>(NamespaceUrls.ObjectUrl(namespaceName), cancellationToken: cancellationToken);
         }
 
         public Task<Namespace> DeleteNamespace(string namespaceName, CancellationToken cancellationToken = default)
         {
-            var url = $"{options.BaseUrl}/api/v1/namespaces/{namespaceName}";
+            if (string.IsNullOrWhiteSpace(namespaceName))
+            {
+                throw new ArgumentNullException(nameof(namespaceName));
+            }
 
-            return this.DeleteAsync<Namespace>(url, immediateDeleteOptions, cancellationToken: cancellationToken);
+            return this.DeleteAsync<Namespace>(NamespaceUrls.ObjectUrl(namespaceName), immediateDeleteOptions, cancellationToken: cancellationToken);
         }
 
         public Task WatchNamespaceChanges(IKubernetesWatcher<Namespace> watcher, CancellationToken cancellationToken = default)
         {
-            var url = $"{options.BaseUrl}/api/v1/namespaces";
+            if (watcher == null)
+            {
+                throw new ArgumentNullException(nameof(watcher));
+            }
 
-            return WatchObjectChangesAsync(url, cancellationToken, watcher);
+            return WatchObjectChangesAsync(NamespaceUrls.BaseUrl, cancellationToken, watcher);
         }
     }
 }
