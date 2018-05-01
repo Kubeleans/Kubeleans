@@ -1,4 +1,4 @@
-﻿using Kubeleans.Kubernetes.Models;
+using Kubeleans.Kubernetes.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,12 +7,13 @@ namespace Kubeleans.Kubernetes
 {
     public partial class KubernetesClient
     {
-        public Task<CustomResourceDefinitionList> ListCustomResourceDefinitions(CancellationToken cancellationToken = default)
+        private static class CustomResourceDefinitionUrls
         {
-            var url = $"{options.BaseUrl}/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions";
-
-            return this.GetAsync<CustomResourceDefinitionList>(url, cancellationToken: cancellationToken);
+            internal static string BaseUrl => "apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions";
+            internal static string ObjectUrl(string customResourceDefinitionName) => $"apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/{customResourceDefinitionName}";
         }
+
+        public Task<CustomResourceDefinitionList> ListCustomResourceDefinitions(CancellationToken cancellationToken = default) => this.GetAsync<CustomResourceDefinitionList>(CustomResourceDefinitionUrls.BaseUrl, cancellationToken: cancellationToken);
 
         public Task<CustomResourceDefinition> CreateCustomResourceDefinition(CustomResourceDefinition customResourceDefinition, CancellationToken cancellationToken = default)
         {
@@ -21,26 +22,22 @@ namespace Kubeleans.Kubernetes
                 throw new ArgumentNullException(nameof(customResourceDefinition));
             }
 
-            var url = $"{options.BaseUrl}/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions";
-
-            return this.PostAsync<CustomResourceDefinition, CustomResourceDefinition>(url, payload: customResourceDefinition, cancellationToken: cancellationToken);
+            return this.PostAsync<CustomResourceDefinition, CustomResourceDefinition>(CustomResourceDefinitionUrls.BaseUrl, payload: customResourceDefinition, cancellationToken: cancellationToken);
         }
 
-        public Task<CustomResourceDefinition> ReplaceCustomResourceDefinition(string customResourceDefinitionName, CustomResourceDefinition customResourceDefinition, CancellationToken cancellationToken = default)
+        public Task<CustomResourceDefinition> ReplaceCustomResourceDefinition(CustomResourceDefinition customResourceDefinition, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(customResourceDefinitionName))
-            {
-                throw new ArgumentNullException(nameof(customResourceDefinitionName));
-            }
-
             if (customResourceDefinition == null)
             {
                 throw new ArgumentNullException(nameof(customResourceDefinition));
             }
 
-            var url = $"{options.BaseUrl}/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/{customResourceDefinitionName}";
+            if (customResourceDefinition.Metadata == null || string.IsNullOrWhiteSpace(customResourceDefinition.Metadata.Name))
+            {
+                throw new ArgumentNullException(nameof(customResourceDefinition.Metadata.Name), "Metadata.Name is required.");
+            }
 
-            return this.PutAsync<CustomResourceDefinition, CustomResourceDefinition>(url, payload: customResourceDefinition, cancellationToken: cancellationToken);
+            return this.PutAsync<CustomResourceDefinition, CustomResourceDefinition>(CustomResourceDefinitionUrls.ObjectUrl(customResourceDefinition.Metadata.Name), payload: customResourceDefinition, cancellationToken: cancellationToken);
         }
 
         public Task<CustomResourceDefinition> GetCustomResourceDefinition(string customResourceDefinitionName, CancellationToken cancellationToken = default)
@@ -50,23 +47,27 @@ namespace Kubeleans.Kubernetes
                 throw new ArgumentNullException(nameof(customResourceDefinitionName));
             }
 
-            var url = $"{options.BaseUrl}/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/{customResourceDefinitionName}";
-
-            return this.GetAsync<CustomResourceDefinition>(url, cancellationToken: cancellationToken);
+            return this.GetAsync<CustomResourceDefinition>(CustomResourceDefinitionUrls.ObjectUrl(customResourceDefinitionName), cancellationToken: cancellationToken);
         }
 
         public Task<CustomResourceDefinition> DeleteCustomResourceDefinition(string customResourceDefinitionName, CancellationToken cancellationToken = default)
         {
-            var url = $"{options.BaseUrl}/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/{customResourceDefinitionName}";
+            if (string.IsNullOrWhiteSpace(customResourceDefinitionName))
+            {
+                throw new ArgumentNullException(nameof(customResourceDefinitionName));
+            }
 
-            return this.DeleteAsync<CustomResourceDefinition>(url, immediateDeleteOptions, cancellationToken: cancellationToken);
+            return this.DeleteAsync<CustomResourceDefinition>(CustomResourceDefinitionUrls.ObjectUrl(customResourceDefinitionName), immediateDeleteOptions, cancellationToken: cancellationToken);
         }
 
         public Task WatchCustomResourceDefinitionChanges(IKubernetesWatcher<CustomResourceDefinition> watcher, CancellationToken cancellationToken = default)
         {
-            var url = $"{options.BaseUrl}/apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions";
+            if (watcher == null)
+            {
+                throw new ArgumentNullException(nameof(watcher));
+            }
 
-            return WatchObjectChangesAsync(url, cancellationToken, watcher);
+            return WatchObjectChangesAsync(CustomResourceDefinitionUrls.BaseUrl, cancellationToken, watcher);
         }
     }
 }

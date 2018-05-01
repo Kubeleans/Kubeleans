@@ -10,7 +10,7 @@ namespace Kubeleans.Kubernetes
     {
         public KubernetesClientOptions()
         {
-            JsonSerializerSettings = new JsonSerializerSettings
+            this.JsonSerializerSettings = new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore,
                 ContractResolver = new CamelCasePropertyNamesContractResolver(),

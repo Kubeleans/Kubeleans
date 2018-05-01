@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System;
@@ -20,7 +20,7 @@ namespace Kubeleans.Kubernetes
         private const string ApplicationJson = "application/json";
         private readonly MediaTypeHeaderValue jsonMediaType = new MediaTypeHeaderValue(ApplicationJson);
 
-        private readonly KeyValuePair<string, string> LabelSelector = new KeyValuePair<string, string>("labelSelector", Uri.EscapeDataString("component=kubeleans"));
+        private readonly KeyValuePair<string, string> labelSelector = new KeyValuePair<string, string>("labelSelector", Uri.EscapeDataString("component=kubeleans"));
 
         private readonly ILogger<KubernetesClient> logger;
         private readonly KubernetesClientOptions options;
@@ -37,8 +37,8 @@ namespace Kubeleans.Kubernetes
             this.logger = logger;
             this.options = options.Value;
 
-            httpClient = new HttpClient();
-            jsonSerializer = JsonSerializer.Create(this.options.JsonSerializerSettings);
+            this.httpClient = new HttpClient();
+            this.jsonSerializer = JsonSerializer.Create(this.options.JsonSerializerSettings);
 
             ConfigureHttpClientDefaults();
         }
@@ -66,14 +66,14 @@ namespace Kubeleans.Kubernetes
 
                 if (addDefaultLabelSelector)
                 {
-                    queryStringBuilder.Append($"{LabelSelector.Key}={LabelSelector.Value}");
+                    queryStringBuilder.Append($"{this.labelSelector.Key}={this.labelSelector.Value}");
                 }
 
                 url += $"?{queryStringBuilder.ToString()}";
             }
             else if (addDefaultLabelSelector)
             {
-                url += $"?{LabelSelector.Key}={LabelSelector.Value}";
+                url += $"?{this.labelSelector.Key}={this.labelSelector.Value}";
             }
 
             var request = new HttpRequestMessage(httpMethod, url);
@@ -102,21 +102,21 @@ namespace Kubeleans.Kubernetes
 
                     var jsonTextWriter = new JsonTextWriter(streamWriter);
 
-                    jsonSerializer.Serialize(jsonTextWriter, payload);
+                    this.jsonSerializer.Serialize(jsonTextWriter, payload);
 
-                    await streamWriter.FlushAsync();
+                    await streamWriter.FlushAsync().ConfigureAwait(false);
 
                     memoryStream.Position = 0;
 
                     request.Content = new StreamContent(memoryStream);
-                    request.Content.Headers.ContentType = jsonMediaType;
+                    request.Content.Headers.ContentType = this.jsonMediaType;
                 }
 
-                response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                response = await this.httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw await ApiException.Create(request, request.Method, response, options.JsonSerializerSettings).ConfigureAwait(false);
+                    throw await ApiException.Create(request, request.Method, response, this.options.JsonSerializerSettings).ConfigureAwait(false);
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -133,7 +133,7 @@ namespace Kubeleans.Kubernetes
                         {
                             using (var jsonTextReader = new JsonTextReader(streamReader))
                             {
-                                return jsonSerializer.Deserialize<TResult>(jsonTextReader);
+                                return this.jsonSerializer.Deserialize<TResult>(jsonTextReader);
                             }
                         }
                     }
@@ -163,7 +163,7 @@ namespace Kubeleans.Kubernetes
 
                 if (addDefaultLabelSelector)
                 {
-                    queryStringBuilder.Append($"{LabelSelector.Key}={LabelSelector.Value}");
+                    queryStringBuilder.Append($"{this.labelSelector.Key}={this.labelSelector.Value}");
                 }
 
                 queryStringBuilder.Append($"watch=1");
@@ -172,7 +172,7 @@ namespace Kubeleans.Kubernetes
             }
             else if (addDefaultLabelSelector)
             {
-                url += $"?{LabelSelector.Key}={LabelSelector.Value}&watch=1";
+                url += $"?{this.labelSelector.Key}={this.labelSelector.Value}&watch=1";
             }
             else
             {
@@ -186,14 +186,11 @@ namespace Kubeleans.Kubernetes
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                request.Headers.Clear();
-                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJson));
-
-                response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                response = await this.httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw await ApiException.Create(request, request.Method, response, options.JsonSerializerSettings).ConfigureAwait(false);
+                    throw await ApiException.Create(request, request.Method, response, this.options.JsonSerializerSettings).ConfigureAwait(false);
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -213,7 +210,7 @@ namespace Kubeleans.Kubernetes
 
         public async Task WatchObjectChangesAsync<T>(string url, CancellationToken cancellationToken, IKubernetesWatcher<T> watcher) where T : new()
         {
-            if (String.IsNullOrWhiteSpace(url))
+            if (string.IsNullOrWhiteSpace(url))
             {
                 throw new ArgumentNullException(nameof(url));
             }
@@ -231,15 +228,15 @@ namespace Kubeleans.Kubernetes
                     {
                         try
                         {
-                            var line = default(string);
+                           var line = default(string);
 
-                            while ((line = await streamReader.ReadLineAsync()) != null)
+                            while ((line = await streamReader.ReadLineAsync().ConfigureAwait(false)) != null)
                             {
                                 var item = JsonConvert.DeserializeObject<Watch<T>>(line);
 
                                 if (item != null)
                                 {
-                                    await watcher.Change(item);
+                                    await watcher.Change(item).ConfigureAwait(false);
                                 }
                             }
                         }
@@ -253,7 +250,7 @@ namespace Kubeleans.Kubernetes
                         }
                         catch (Exception ex)
                         {
-                            await watcher.Error(ex);
+                            await watcher.Error(ex).ConfigureAwait(false);
                         }
                     }
                 }
@@ -267,15 +264,17 @@ namespace Kubeleans.Kubernetes
 
         private void ConfigureHttpClientDefaults()
         {
-            httpClient.DefaultRequestHeaders.Accept.Clear();
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJson));
+            this.httpClient.BaseAddress = new Uri(this.options.BaseUrl);
+
+            this.httpClient.DefaultRequestHeaders.Accept.Clear();
+            this.httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(ApplicationJson));
         }
 
         private void Dispose(bool isDisposing)
         {
             if (isDisposing)
             {
-                httpClient?.Dispose();
+                this.httpClient?.Dispose();
             }
         }
     }
