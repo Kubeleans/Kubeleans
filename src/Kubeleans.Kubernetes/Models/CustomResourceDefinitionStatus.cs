@@ -21,6 +21,6 @@ namespace Kubeleans.Kubernetes.Models
         /// Gets or sets conditions indicate state for particular aspects of a
         /// CustomResourceDefinition
         /// </summary>
-        public IList<CustomResourceDefinitionCondition> Conditions { get; set; }
+        public List<CustomResourceDefinitionCondition> Conditions { get; set; }
     }
 }

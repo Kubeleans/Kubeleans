@@ -11,7 +11,7 @@ namespace Kubeleans.Kubernetes.Models
 
         /// <summary>
         /// </summary>
-        public IList<string> Property { get; set; }
+        public List<string> Property { get; set; }
 
         /// <summary>
         /// </summary>

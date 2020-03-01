@@ -14,7 +14,7 @@ namespace Kubeleans.Kubernetes.Models
         /// Gets or sets categories is a list of grouped resources custom
         /// resources belong to (e.g. 'all')
         /// </summary>
-        public IList<string> Categories { get; set; }
+        public List<string> Categories { get; set; }
 
         /// <summary>
         /// Gets or sets kind is the serialized kind of the resource.  It is
@@ -39,7 +39,7 @@ namespace Kubeleans.Kubernetes.Models
         /// Gets or sets shortNames are short names for the resource.  It must
         /// be all lowercase.
         /// </summary>
-        public IList<string> ShortNames { get; set; }
+        public List<string> ShortNames { get; set; }
 
         /// <summary>
         /// Gets or sets singular is the singular name of the resource.  It

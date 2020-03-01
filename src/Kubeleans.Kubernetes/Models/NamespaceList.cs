@@ -22,7 +22,7 @@ namespace Kubeleans.Kubernetes.Models
         /// More info:
         /// https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
         /// </summary>
-        public IList<Namespace> Items { get; set; }
+        public List<Namespace> Items { get; set; }
 
         /// <summary>
         /// Gets or sets kind is a string value representing the REST resource

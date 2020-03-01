@@ -14,7 +14,7 @@ namespace Kubeleans.Kubernetes.Models
         /// initializers struct will be set to nil and the object is considered
         /// as initialized and visible to all clients.
         /// </summary>
-        public IList<Initializer> Pending { get; set; }
+        public List<Initializer> Pending { get; set; }
 
         /// <summary>
         /// Gets or sets if result is set with the Failure field, the object

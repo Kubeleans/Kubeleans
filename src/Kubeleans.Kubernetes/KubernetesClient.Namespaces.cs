@@ -13,9 +13,9 @@ namespace Kubeleans.Kubernetes
             internal static string ObjectUrl(string namespaceName) => $"api/v1/namespaces/{namespaceName}";
         }
 
-        public Task<NamespaceList> ListNamespaces(CancellationToken cancellationToken = default) => this.GetAsync<NamespaceList>(NamespaceUrls.BaseUrl, cancellationToken: cancellationToken);
+        public ValueTask<NamespaceList> ListNamespaces(CancellationToken cancellationToken = default) => this.GetAsync<NamespaceList>(NamespaceUrls.BaseUrl, cancellationToken: cancellationToken);
 
-        public Task<Namespace> CreateNamespace(Namespace @namespace, CancellationToken cancellationToken = default)
+        public ValueTask<Namespace> CreateNamespace(Namespace @namespace, CancellationToken cancellationToken = default)
         {
             if (@namespace == null)
             {
@@ -25,7 +25,7 @@ namespace Kubeleans.Kubernetes
             return this.PostAsync<Namespace, Namespace>(NamespaceUrls.BaseUrl, payload: @namespace, cancellationToken: cancellationToken);
         }
 
-        public Task<Namespace> ReplaceNamespace(Namespace @namespace, CancellationToken cancellationToken = default)
+        public ValueTask<Namespace> ReplaceNamespace(Namespace @namespace, CancellationToken cancellationToken = default)
         {
             if (@namespace == null)
             {
@@ -40,7 +40,7 @@ namespace Kubeleans.Kubernetes
             return this.PutAsync<Namespace, Namespace>(NamespaceUrls.ObjectUrl(@namespace.Metadata.Name), payload: @namespace, cancellationToken: cancellationToken);
         }
 
-        public Task<Namespace> GetNamespace(string namespaceName, CancellationToken cancellationToken = default)
+        public ValueTask<Namespace> GetNamespace(string namespaceName, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(namespaceName))
             {
@@ -50,7 +50,7 @@ namespace Kubeleans.Kubernetes
             return this.GetAsync<Namespace>(NamespaceUrls.ObjectUrl(namespaceName), cancellationToken: cancellationToken);
         }
 
-        public Task<Namespace> DeleteNamespace(string namespaceName, CancellationToken cancellationToken = default)
+        public ValueTask<Namespace> DeleteNamespace(string namespaceName, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(namespaceName))
             {
@@ -60,7 +60,7 @@ namespace Kubeleans.Kubernetes
             return this.DeleteAsync<Namespace>(NamespaceUrls.ObjectUrl(namespaceName), immediateDeleteOptions, cancellationToken: cancellationToken);
         }
 
-        public Task WatchNamespaceChanges(IKubernetesWatcher<Namespace> watcher, CancellationToken cancellationToken = default)
+        public ValueTask WatchNamespaceChanges(IKubernetesWatcher<Namespace> watcher, CancellationToken cancellationToken = default)
         {
             if (watcher == null)
             {

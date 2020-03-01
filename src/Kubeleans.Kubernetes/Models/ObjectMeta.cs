@@ -16,7 +16,7 @@ namespace Kubeleans.Kubernetes.Models
         /// preserved when modifying objects. More info:
         /// http://kubernetes.io/docs/user-guide/annotations
         /// </summary>
-        public IDictionary<string, string> Annotations { get; set; }
+        public Dictionary<string, string> Annotations { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the cluster which the object belongs to.
@@ -79,7 +79,7 @@ namespace Kubeleans.Kubernetes.Models
         /// that will remove the entry from the list. If the deletionTimestamp
         /// of the object is non-nil, entries in this list can only be removed.
         /// </summary>
-        public IList<string> Finalizers { get; set; }
+        public List<string> Finalizers { get; set; }
 
         /// <summary>
         /// Gets or sets generateName is an optional prefix, used by the
@@ -131,7 +131,7 @@ namespace Kubeleans.Kubernetes.Models
         /// selectors of replication controllers and services. More info:
         /// http://kubernetes.io/docs/user-guide/labels
         /// </summary>
-        public IDictionary<string, string> Labels { get; set; }
+        public Dictionary<string, string> Labels { get; set; }
 
         /// <summary>
         /// Gets or sets name must be unique within a namespace. Is required
@@ -163,7 +163,7 @@ namespace Kubeleans.Kubernetes.Models
         /// field set to true. There cannot be more than one managing
         /// controller.
         /// </summary>
-        public IList<OwnerReference> OwnerReferences { get; set; }
+        public List<OwnerReference> OwnerReferences { get; set; }
 
         /// <summary>
         /// Gets or sets an opaque value that represents the internal version

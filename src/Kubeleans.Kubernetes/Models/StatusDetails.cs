@@ -17,7 +17,7 @@ namespace Kubeleans.Kubernetes.Models
         /// the StatusReason failure. Not all StatusReasons may provide
         /// detailed causes.
         /// </summary>
-        public IList<StatusCause> Causes { get; set; }
+        public List<StatusCause> Causes { get; set; }
 
         /// <summary>
         /// Gets or sets the group attribute of the resource associated with

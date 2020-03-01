@@ -1,7 +1,4 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
-using System.Globalization;
+﻿using System.Text.Json;
 //using System.Security.Cryptography.X509Certificates;
 
 namespace Kubeleans.Kubernetes
@@ -10,19 +7,16 @@ namespace Kubeleans.Kubernetes
     {
         public KubernetesClientOptions()
         {
-            this.JsonSerializerSettings = new JsonSerializerSettings
+            this.SerializerOptions = new JsonSerializerOptions
             {
-                NullValueHandling = NullValueHandling.Ignore,
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                Culture = CultureInfo.InvariantCulture,
-                Converters = new[]
-                    {
-                    new StringEnumConverter(true)
-                },
+                IgnoreNullValues = true,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 #if DEBUG
-                Formatting = Formatting.Indented
+                WriteIndented = true
 #else
-                Formatting = Formatting.None
+                WriteIndented = false
 #endif
             };
         }
@@ -35,6 +29,6 @@ namespace Kubeleans.Kubernetes
 
         //public X509Certificate RootCertificate { get; set; }
 
-        public JsonSerializerSettings JsonSerializerSettings { get; set; }
+        public JsonSerializerOptions SerializerOptions { get; set; }
     }
 }

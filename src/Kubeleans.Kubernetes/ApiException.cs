@@ -1,18 +1,20 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Text.Json;
+using System.IO;
+using System.Text;
 
 namespace Kubeleans.Kubernetes
 {
     // Based on https://github.com/paulcbetts/refit/blob/master/Refit/ApiException.cs
     public class ApiException : Exception
     {
-        protected readonly JsonSerializerSettings jsonSerializerSettings;
+        protected readonly JsonSerializerOptions serializerOptions;
 
-        public ApiException(HttpRequestMessage request, HttpMethod httpMethod, HttpStatusCode statusCode, string reasonPhrase, HttpResponseHeaders headers, JsonSerializerSettings jsonSerializerSettings)
+        public ApiException(HttpRequestMessage request, HttpMethod httpMethod, HttpStatusCode statusCode, string reasonPhrase, HttpResponseHeaders headers, JsonSerializerOptions serializerOptions)
             : base(CreateMessage(statusCode, reasonPhrase))
         {
             this.Request = request;
@@ -21,9 +23,15 @@ namespace Kubeleans.Kubernetes
             this.ReasonPhrase = reasonPhrase;
             this.Headers = headers;
 
-            this.jsonSerializerSettings = jsonSerializerSettings;
+            this.serializerOptions = serializerOptions;
         }
-        public T GetContentAs<T>() => this.HasContent ? JsonConvert.DeserializeObject<T>(this.Content, this.jsonSerializerSettings) : default;
+        public ValueTask<T> GetContentAs<T>()
+        {
+            if (!this.HasContent) return default;
+
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(this.Content));
+            return JsonSerializer.DeserializeAsync<T>(ms, this.serializerOptions);
+        }
 
         public HttpContentHeaders ContentHeaders { get; private set; }
 
@@ -43,9 +51,9 @@ namespace Kubeleans.Kubernetes
 
         public Uri Uri => this.Request.RequestUri;
 
-        internal static async Task<KubernetesApiException> Create(HttpRequestMessage request, HttpMethod httpMethod, HttpResponseMessage response, JsonSerializerSettings jsonSerializerSettings)
+        internal static async Task<KubernetesApiException> Create(HttpRequestMessage request, HttpMethod httpMethod, HttpResponseMessage response, JsonSerializerOptions serializerOptions)
         {
-            var exception = new KubernetesApiException(request, httpMethod, response.StatusCode, response.ReasonPhrase, response.Headers, jsonSerializerSettings);
+            var exception = new KubernetesApiException(request, httpMethod, response.StatusCode, response.ReasonPhrase, response.Headers, serializerOptions);
 
             if (response.Content == null)
             {
@@ -61,8 +69,8 @@ namespace Kubeleans.Kubernetes
             }
             catch
             {
-                // NB: We're already handling an exception at this point, 
-                // so we want to make sure we don't throw another one 
+                // NB: We're already handling an exception at this point,
+                // so we want to make sure we don't throw another one
                 // that hides the real error.
             }
 

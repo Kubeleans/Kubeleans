@@ -13,9 +13,9 @@ namespace Kubeleans.Kubernetes
             internal static string ObjectUrl(string customResourceDefinitionName) => $"apis/apiextensions.k8s.io/v1beta1/customresourcedefinitions/{customResourceDefinitionName}";
         }
 
-        public Task<CustomResourceDefinitionList> ListCustomResourceDefinitions(CancellationToken cancellationToken = default) => this.GetAsync<CustomResourceDefinitionList>(CustomResourceDefinitionUrls.BaseUrl, cancellationToken: cancellationToken);
+        public ValueTask<CustomResourceDefinitionList> ListCustomResourceDefinitions(CancellationToken cancellationToken = default) => this.GetAsync<CustomResourceDefinitionList>(CustomResourceDefinitionUrls.BaseUrl, cancellationToken: cancellationToken);
 
-        public Task<CustomResourceDefinition> CreateCustomResourceDefinition(CustomResourceDefinition customResourceDefinition, CancellationToken cancellationToken = default)
+        public ValueTask<CustomResourceDefinition> CreateCustomResourceDefinition(CustomResourceDefinition customResourceDefinition, CancellationToken cancellationToken = default)
         {
             if (customResourceDefinition == null)
             {
@@ -25,7 +25,7 @@ namespace Kubeleans.Kubernetes
             return this.PostAsync<CustomResourceDefinition, CustomResourceDefinition>(CustomResourceDefinitionUrls.BaseUrl, payload: customResourceDefinition, cancellationToken: cancellationToken);
         }
 
-        public Task<CustomResourceDefinition> ReplaceCustomResourceDefinition(CustomResourceDefinition customResourceDefinition, CancellationToken cancellationToken = default)
+        public ValueTask<CustomResourceDefinition> ReplaceCustomResourceDefinition(CustomResourceDefinition customResourceDefinition, CancellationToken cancellationToken = default)
         {
             if (customResourceDefinition == null)
             {
@@ -40,7 +40,7 @@ namespace Kubeleans.Kubernetes
             return this.PutAsync<CustomResourceDefinition, CustomResourceDefinition>(CustomResourceDefinitionUrls.ObjectUrl(customResourceDefinition.Metadata.Name), payload: customResourceDefinition, cancellationToken: cancellationToken);
         }
 
-        public Task<CustomResourceDefinition> GetCustomResourceDefinition(string customResourceDefinitionName, CancellationToken cancellationToken = default)
+        public ValueTask<CustomResourceDefinition> GetCustomResourceDefinition(string customResourceDefinitionName, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(customResourceDefinitionName))
             {
@@ -50,7 +50,7 @@ namespace Kubeleans.Kubernetes
             return this.GetAsync<CustomResourceDefinition>(CustomResourceDefinitionUrls.ObjectUrl(customResourceDefinitionName), cancellationToken: cancellationToken);
         }
 
-        public Task<CustomResourceDefinition> DeleteCustomResourceDefinition(string customResourceDefinitionName, CancellationToken cancellationToken = default)
+        public ValueTask<CustomResourceDefinition> DeleteCustomResourceDefinition(string customResourceDefinitionName, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(customResourceDefinitionName))
             {
@@ -60,7 +60,7 @@ namespace Kubeleans.Kubernetes
             return this.DeleteAsync<CustomResourceDefinition>(CustomResourceDefinitionUrls.ObjectUrl(customResourceDefinitionName), immediateDeleteOptions, cancellationToken: cancellationToken);
         }
 
-        public Task WatchCustomResourceDefinitionChanges(IKubernetesWatcher<CustomResourceDefinition> watcher, CancellationToken cancellationToken = default)
+        public ValueTask WatchCustomResourceDefinitionChanges(IKubernetesWatcher<CustomResourceDefinition> watcher, CancellationToken cancellationToken = default)
         {
             if (watcher == null)
             {

@@ -13,7 +13,7 @@ namespace Kubeleans.Kubernetes
             internal static string ObjectUrl(string version, string @namespace, string objectPluralName, string customObjectName) => $"apis/{Group}/{version}/namespaces/{@namespace}/{objectPluralName}/{customObjectName}";
         }
 
-        public Task<T> ListCustomObjects<T>(string objectPluralName, string version = Version1, CancellationToken cancellationToken = default)
+        public ValueTask<T> ListCustomObjects<T>(string objectPluralName, string version = Version1, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(objectPluralName))
             {
@@ -28,7 +28,7 @@ namespace Kubeleans.Kubernetes
             return this.GetAsync<T>(CustomObjectUrls.BaseUrl(version, this.options.Namespace, objectPluralName), cancellationToken: cancellationToken);
         }
 
-        public Task<T> CreateCustomObject<T>(string objectPluralName, T customObject, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
+        public ValueTask<T> CreateCustomObject<T>(string objectPluralName, T customObject, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
         {
             if (string.IsNullOrEmpty(objectPluralName))
             {
@@ -48,7 +48,7 @@ namespace Kubeleans.Kubernetes
             return this.PostAsync<T, T>(CustomObjectUrls.BaseUrl(version, this.options.Namespace, objectPluralName), payload: customObject, cancellationToken: cancellationToken);
         }
 
-        public Task<T> ReplaceCustomObject<T>(string objectPluralName, T customObject, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
+        public ValueTask<T> ReplaceCustomObject<T>(string objectPluralName, T customObject, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
         {
             if (string.IsNullOrWhiteSpace(objectPluralName))
             {
@@ -73,7 +73,7 @@ namespace Kubeleans.Kubernetes
             return this.PutAsync<T, T>(CustomObjectUrls.ObjectUrl(version, this.options.Namespace, objectPluralName, customObject.Metadata.Name), payload: customObject, cancellationToken: cancellationToken);
         }
 
-        public Task<T> GetCustomObject<T>(string objectPluralName, string customObjectName, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
+        public ValueTask<T> GetCustomObject<T>(string objectPluralName, string customObjectName, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
         {
             if (string.IsNullOrWhiteSpace(objectPluralName))
             {
@@ -93,7 +93,7 @@ namespace Kubeleans.Kubernetes
             return this.GetAsync<T>(CustomObjectUrls.ObjectUrl(version, this.options.Namespace, objectPluralName, customObjectName), cancellationToken: cancellationToken);
         }
 
-        public Task<T> DeleteCustomObject<T>(string objectPluralName, string customObjectName, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
+        public ValueTask<T> DeleteCustomObject<T>(string objectPluralName, string customObjectName, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject
         {
             if (string.IsNullOrWhiteSpace(objectPluralName))
             {
@@ -113,14 +113,14 @@ namespace Kubeleans.Kubernetes
             return this.DeleteAsync<T>(CustomObjectUrls.ObjectUrl(version, this.options.Namespace, objectPluralName, customObjectName), immediateDeleteOptions, cancellationToken: cancellationToken);
         }
 
-        public Task WatchCustomObjectChanges<T>(string objectPluralName, IKubernetesWatcher<T> watcher, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject, new()
+        public ValueTask WatchCustomObjectChanges<T>(string objectPluralName, IKubernetesWatcher<T> watcher, string version = Version1, CancellationToken cancellationToken = default) where T : CustomObject, new()
         {
             if (string.IsNullOrWhiteSpace(objectPluralName))
             {
                 throw new ArgumentNullException(nameof(objectPluralName));
             }
 
-            if (watcher==null)
+            if (watcher == null)
             {
                 throw new ArgumentNullException(nameof(watcher));
             }

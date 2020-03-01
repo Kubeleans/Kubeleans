@@ -13,7 +13,7 @@ namespace Kubeleans.Kubernetes.Models
 
         /// <summary>
         /// </summary>
-        public IList<JSONSchemaProps> JSONSchemas { get; set; }
+        public List<JSONSchemaProps> JSONSchemas { get; set; }
 
         /// <summary>
         /// </summary>

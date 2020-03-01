@@ -28,11 +28,11 @@ namespace Kubeleans.Kubernetes.Models
 
         /// <summary>
         /// </summary>
-        public IList<JSONSchemaProps> AllOf { get; set; }
+        public List<JSONSchemaProps> AllOf { get; set; }
 
         /// <summary>
         /// </summary>
-        public IList<JSONSchemaProps> AnyOf { get; set; }
+        public List<JSONSchemaProps> AnyOf { get; set; }
 
         /// <summary>
         /// </summary>
@@ -40,11 +40,11 @@ namespace Kubeleans.Kubernetes.Models
 
         /// <summary>
         /// </summary>
-        public IDictionary<string, JSONSchemaProps> Definitions { get; set; }
+        public Dictionary<string, JSONSchemaProps> Definitions { get; set; }
 
         /// <summary>
         /// </summary>
-        public IDictionary<string, JSONSchemaPropsOrStringArray> Dependencies { get; set; }
+        public Dictionary<string, JSONSchemaPropsOrStringArray> Dependencies { get; set; }
 
         /// <summary>
         /// </summary>
@@ -52,7 +52,7 @@ namespace Kubeleans.Kubernetes.Models
 
         /// <summary>
         /// </summary>
-        public IList<JSON> EnumProperty { get; set; }
+        public List<JSON> EnumProperty { get; set; }
 
         /// <summary>
         /// </summary>
@@ -124,7 +124,7 @@ namespace Kubeleans.Kubernetes.Models
 
         /// <summary>
         /// </summary>
-        public IList<JSONSchemaProps> OneOf { get; set; }
+        public List<JSONSchemaProps> OneOf { get; set; }
 
         /// <summary>
         /// </summary>
@@ -132,15 +132,15 @@ namespace Kubeleans.Kubernetes.Models
 
         /// <summary>
         /// </summary>
-        public IDictionary<string, JSONSchemaProps> PatternProperties { get; set; }
+        public Dictionary<string, JSONSchemaProps> PatternProperties { get; set; }
 
         /// <summary>
         /// </summary>
-        public IDictionary<string, JSONSchemaProps> Properties { get; set; }
+        public Dictionary<string, JSONSchemaProps> Properties { get; set; }
 
         /// <summary>
         /// </summary>
-        public IList<string> Required { get; set; }
+        public List<string> Required { get; set; }
 
         /// <summary>
         /// </summary>

@@ -1,5 +1,5 @@
+using System.Text.Json.Serialization;
 using Kubeleans.Kubernetes.Models;
-using Newtonsoft.Json;
 
 namespace Kubeleans.Model
 {
@@ -8,10 +8,7 @@ namespace Kubeleans.Model
     /// </summary>
     public class GrainFunctionApplication : CustomObject
     {
-        [JsonIgnore]
         private const string VERSION = "kubeleans.io/v1";
-
-        [JsonIgnore]
         private const string KIND = "GrainFunctionApplication";
 
         [JsonIgnore]

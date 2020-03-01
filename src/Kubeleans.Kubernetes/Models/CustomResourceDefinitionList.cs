@@ -21,7 +21,7 @@ namespace Kubeleans.Kubernetes.Models
         /// <summary>
         /// Gets or sets items individual CustomResourceDefinitions
         /// </summary>
-        public IList<CustomResourceDefinition> Items { get; set; }
+        public List<CustomResourceDefinition> Items { get; set; }
 
         /// <summary>
         /// Gets or sets kind is a string value representing the REST resource

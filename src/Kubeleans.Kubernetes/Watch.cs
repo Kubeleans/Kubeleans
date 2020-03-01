@@ -1,17 +1,21 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Kubeleans.Kubernetes
 {
+    // [JsonConverter(typeof(WatchConverter))]
     public sealed class Watch<T>
     {
-        public Watch(string type, T @object)
-        {
-            this.Type = (WatchTypes)Enum.Parse(typeof(WatchTypes), type, true);
-            this.Object = @object;
-        }
+        //TODO: To make this immutable again, fix WatchConverter
+        // public Watch(string type, T @object)
+        // {
+        //     this.Type = (WatchTypes)Enum.Parse(typeof(WatchTypes), type, true);
+        //     this.Object = @object;
+        // }
 
-        public WatchTypes Type { get; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public WatchTypes Type { get; set; }
 
-        public T Object { get; }
+        public T Object { get; set; }
     }
 }

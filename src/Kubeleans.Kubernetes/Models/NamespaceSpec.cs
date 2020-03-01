@@ -13,6 +13,6 @@ namespace Kubeleans.Kubernetes.Models
         /// empty to permanently remove object from storage. More info:
         /// https://kubernetes.io/docs/tasks/administer-cluster/namespaces/
         /// </summary>
-        public IList<string> Finalizers { get; set; }
+        public List<string> Finalizers { get; set; }
     }
 }

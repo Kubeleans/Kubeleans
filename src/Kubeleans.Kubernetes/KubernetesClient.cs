@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,11 +25,11 @@ namespace Kubeleans.Kubernetes
         private readonly ILogger<KubernetesClient> logger;
         private readonly KubernetesClientOptions options;
         private readonly HttpClient httpClient;
-        private readonly JsonSerializer jsonSerializer;
+        private readonly JsonSerializerOptions serializerOptions;
 
         private static KeyValuePair<string, string>[] immediateDeleteOptions = new[]
         {
-                new KeyValuePair<string, string>("gracePeriodSeconds", "0")
+            new KeyValuePair<string, string>("gracePeriodSeconds", "0")
         };
 
         public KubernetesClient(ILogger<KubernetesClient> logger, IOptions<KubernetesClientOptions> options/* TODO with KubernetesClientBuilder, Func<Task<HttpClient>> httpClientFactory = null, HttpClientHandler httpClientHandler = null*/)
@@ -38,7 +38,7 @@ namespace Kubeleans.Kubernetes
             this.options = options.Value;
 
             this.httpClient = new HttpClient();
-            this.jsonSerializer = JsonSerializer.Create(this.options.JsonSerializerSettings);
+            this.serializerOptions = this.options.SerializerOptions;
 
             ConfigureHttpClientDefaults();
         }
@@ -53,7 +53,7 @@ namespace Kubeleans.Kubernetes
             Dispose(true);
         }
 
-        public async Task<TResult> SendAsync<TResult>(string url, HttpMethod httpMethod, IEnumerable<KeyValuePair<string, string>> queryParameters = default, object payload = default, string contentType = ApplicationJson, bool addDefaultLabelSelector = false, CancellationToken cancellationToken = default)
+        public async ValueTask<TResult> SendAsync<TResult>(string url, HttpMethod httpMethod, IEnumerable<KeyValuePair<string, string>> queryParameters = default, object payload = default, string contentType = ApplicationJson, bool addDefaultLabelSelector = false, CancellationToken cancellationToken = default)
         {
             if (queryParameters != null)
             {
@@ -94,19 +94,10 @@ namespace Kubeleans.Kubernetes
                 }
                 else if (payload != null)
                 {
-                    // StreamContent will dispose it.
                     var memoryStream = new MemoryStream();
 
-                    // JsonTextWriter will dispose it.
-                    var streamWriter = new StreamWriter(memoryStream);
-
-                    var jsonTextWriter = new JsonTextWriter(streamWriter);
-
-                    this.jsonSerializer.Serialize(jsonTextWriter, payload);
-
-                    await streamWriter.FlushAsync().ConfigureAwait(false);
-
-                    memoryStream.Position = 0;
+                    await JsonSerializer.SerializeAsync(memoryStream, payload, payload.GetType(), this.serializerOptions);
+                    memoryStream.Seek(0, SeekOrigin.Begin);
 
                     request.Content = new StreamContent(memoryStream);
                     request.Content.Headers.ContentType = this.jsonMediaType;
@@ -116,27 +107,20 @@ namespace Kubeleans.Kubernetes
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw await ApiException.Create(request, request.Method, response, this.options.JsonSerializerSettings).ConfigureAwait(false);
+                    throw await ApiException.Create(request, request.Method, response, this.options.SerializerOptions).ConfigureAwait(false);
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                if (typeof(TResult) == typeof(string))
                 {
-                    using (var streamReader = new StreamReader(stream, Encoding.UTF8))
-                    {
-                        if (typeof(TResult) == typeof(string))
-                        {
-                            return (TResult)((object)await streamReader.ReadToEndAsync().ConfigureAwait(false));
-                        }
-                        else
-                        {
-                            using (var jsonTextReader = new JsonTextReader(streamReader))
-                            {
-                                return this.jsonSerializer.Deserialize<TResult>(jsonTextReader);
-                            }
-                        }
-                    }
+                    var streamReader = new StreamReader(stream, Encoding.UTF8);
+                    return (TResult)((object)await streamReader.ReadToEndAsync().ConfigureAwait(false));
+                }
+                else
+                {
+                    return await JsonSerializer.DeserializeAsync<TResult>(stream, this.serializerOptions, cancellationToken).ConfigureAwait(false);
                 }
             }
             finally
@@ -190,7 +174,7 @@ namespace Kubeleans.Kubernetes
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    throw await ApiException.Create(request, request.Method, response, this.options.JsonSerializerSettings).ConfigureAwait(false);
+                    throw await ApiException.Create(request, request.Method, response, this.options.SerializerOptions).ConfigureAwait(false);
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
@@ -203,12 +187,12 @@ namespace Kubeleans.Kubernetes
             {
                 request.Dispose();
 
-                // There is no need to dispose the response here, since the only disposable piece is the stream and it is 
+                // There is no need to dispose the response here, since the only disposable piece is the stream and it is
                 // the caller's responsibility to dispose it after done reading/processing.
             }
         }
 
-        public async Task WatchObjectChangesAsync<T>(string url, CancellationToken cancellationToken, IKubernetesWatcher<T> watcher) where T : new()
+        public async ValueTask WatchObjectChangesAsync<T>(string url, CancellationToken cancellationToken, IKubernetesWatcher<T> watcher) where T : new()
         {
             if (string.IsNullOrWhiteSpace(url))
             {
@@ -228,11 +212,12 @@ namespace Kubeleans.Kubernetes
                     {
                         try
                         {
-                           var line = default(string);
+                            var line = default(string);
 
                             while ((line = await streamReader.ReadLineAsync().ConfigureAwait(false)) != null)
                             {
-                                var item = JsonConvert.DeserializeObject<Watch<T>>(line);
+                                var ms = new MemoryStream(Encoding.UTF8.GetBytes(line));
+                                var item = await JsonSerializer.DeserializeAsync<Watch<T>>(ms, this.serializerOptions);
 
                                 if (item != null)
                                 {
@@ -240,6 +225,7 @@ namespace Kubeleans.Kubernetes
                                 }
                             }
                         }
+                        catch (IOException) { } // TODO: Check if this happens always or only at tests
                         catch (ObjectDisposedException)
                         {
                             // If cancellation signs the end of reading operation we need to swallow it
@@ -257,7 +243,7 @@ namespace Kubeleans.Kubernetes
             }
         }
 
-        public Task WatchObjectChangesAsync<T>(string url, CancellationToken cancellationToken, Func<Watch<T>, Task> changeHandler, Func<Exception, Task> errorHandler = null) where T : new()
+        public ValueTask WatchObjectChangesAsync<T>(string url, CancellationToken cancellationToken, Func<Watch<T>, Task> changeHandler, Func<Exception, Task> errorHandler = null) where T : new()
         {
             return WatchObjectChangesAsync(url, cancellationToken, new KubernetesWatcher<T>(changeHandler, errorHandler));
         }
