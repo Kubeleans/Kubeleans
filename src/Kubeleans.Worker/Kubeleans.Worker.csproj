@@ -8,4 +8,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../Kubeleans.Abstractions/Kubeleans.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>
