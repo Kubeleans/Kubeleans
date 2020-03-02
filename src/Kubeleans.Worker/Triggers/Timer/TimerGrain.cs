@@ -47,9 +47,9 @@ namespace Kubeleans.Triggers.Timer
             }
         }
 
-        public Task Register(Immutable<TimeSpan> startOn, Immutable<TimeSpan> happensEvery)
+        public Task Register(Immutable<TimeSpan> startFrom, Immutable<TimeSpan> tickEvery)
         {
-            return this.RegisterOrUpdateReminder(this._id.Name, startOn.Value, happensEvery.Value);
+            return this.RegisterOrUpdateReminder(this._id.Name, startFrom.Value, tickEvery.Value);
         }
 
         public async Task Unregister()
@@ -61,7 +61,7 @@ namespace Kubeleans.Triggers.Timer
             }
             else
             {
-                this._logger.LogWarning("Attempt to unregister an inexistent reminder: '{name}'.", this._id.Name);
+                this._logger.LogWarning("Attempt to unregister an inexistent timer: '{name}'.", this._id.Name);
             }
         }
     }

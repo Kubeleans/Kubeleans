@@ -5,9 +5,9 @@ using Orleans.Concurrency;
 
 namespace Kubeleans.Abstractions.Triggers.Timer
 {
-    public interface ITimerGrain : IGrainWithStringKey
+    internal interface ITimerGrain : IGrainWithStringKey
     {
-        Task Register(Immutable<TimeSpan> startOn, Immutable<TimeSpan> happensEvery);
+        Task Register(Immutable<TimeSpan> startFrom, Immutable<TimeSpan> tickEvery);
         Task Unregister();
     }
 }

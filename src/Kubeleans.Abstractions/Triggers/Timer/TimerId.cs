@@ -2,7 +2,7 @@ using System;
 
 namespace Kubeleans.Abstractions.Triggers.Timer
 {
-    public struct TimerId
+    internal struct TimerId
     {
         public string Name { get; }
         public string FunctionType { get; }
